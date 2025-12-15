@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Bitácora de Desfibriladores</title>
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="/index.html">
+      <i class="bi bi-hospital"></i> Hospital
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" 
+            data-bs-target="#navbarNav" aria-controls="navbarNav" 
+            aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav me-auto" id="menuOpciones"></ul>
+      <ul class="navbar-nav">
+        <li class="nav-item">
+          <a class="nav-link text-danger" href="/logout">
+            <i class="bi bi-box-arrow-right"></i> Cerrar Sesión
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<script>
+// Cargar menú dinámico según tipo de usuario
+fetch('/api/session-user')
+  .then(res => res.json())
+  .then(user => {
+    const menu = document.getElementById('menuOpciones');
+    if (!user) return;
+
+    if (user.tipo_usuario == 1) {
+      // Administrador
+      menu.innerHTML = `
+        <li class="nav-item">
+          <a class="nav-link" href="/gestionar-usuarios.html">
+            <i class="bi bi-people"></i> Gestionar Usuarios
+          </a>
+        </li>
+      `;
+    } else if (user.tipo_usuario == 2) {
+      // Enfermero
+      menu.innerHTML = `
+        <li class="nav-item">
+          <a class="nav-link" href="/mis-datos.html">
+            <i class="bi bi-person-badge"></i> Mis Datos
+          </a>
+        </li>
+      `;
+    }
+  })
+  .catch(err => console.error("Error cargando menú:", err));
+</script>
+
+
+<div class="container my-5">
+
+  <!-- Contenedor de alertas -->
+  <div id="alertas" class="my-3"></div>
+
+  <!-- Buscador -->
+  <section id="buscador" class="mb-4">
+    <h2 class="mb-3"><i class="bi bi-search"></i> Buscar desfibrilador</h2>
+    <form id="form-busqueda" class="d-flex">
+      <input type="text" id="query" class="form-control me-2" 
+             placeholder="Ejemplo: UCI, quirófano, disponible..." required>
+      <button type="submit" class="btn btn-primary">
+        <i class="bi bi-search"></i> Buscar
+      </button>
+    </form>
+  </section>
+
+  <!-- Resultados -->
+  <section id="resultados">
+    <h2 class="mb-3">Resultados</h2>
+    <div class="table-responsive">
+      <table id="tabla-resultados" class="table table-striped table-hover">
+        <thead class="table-dark">
+          <tr>
+            <th>Área</th>
+            <th>Marca</th>
+            <th>Modelo</th>
+            <th>Número de serie</th>
+            <th>Estado</th>
+            <th>Zona</th>
+            <th>Última modificación</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Aquí se insertarán los resultados -->
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+// Función para mostrar alertas
+function mostrarAlerta(mensaje, tipo = "success") {
+  const alertas = document.getElementById("alertas");
+  alertas.innerHTML = `
+    <div class="alert alert-${tipo} alert-dismissible fade show" role="alert">
+      ${mensaje}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+    </div>
+  `;
+}
+
+// Función para renderizar la tabla
+function cargarTabla(data) {
+  const tbody = document.querySelector('#tabla-resultados tbody');
+  tbody.innerHTML = '';
+
+  if (!Array.isArray(data) || data.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="8" class="text-center">No se encontraron desfibriladores</td></tr>';
+    return;
+  }
+
+  data.forEach(d => {
+    // Badge según estado
+    let badgeEstado = '';
+    if (d.estado === 'Disponible') {
+      badgeEstado = '<span class="badge bg-success"><i class="bi bi-check-circle"></i> Disponible</span>';
+    } else if (d.estado === 'Mantenimiento') {
+      badgeEstado = '<span class="badge bg-warning text-dark"><i class="bi bi-tools"></i> Mantenimiento</span>';
+    } else if (d.estado === 'Ocupado') {
+      badgeEstado = '<span class="badge bg-danger"><i class="bi bi-x-circle"></i> Ocupado</span>';
+    } else {
+      badgeEstado = `<span class="badge bg-secondary">${d.estado || 'N/A'}</span>`;
+    }
+
+    // Botones de acción
+      let acciones = `
+        <button class="btn btn-warning btn-sm" onclick="editarDesfibrilador(${d.id})">
+          <i class="bi bi-pencil-square"></i> Editar
+        </button>
+        <button class="btn btn-danger btn-sm" onclick="eliminarDesfibrilador(${d.id})">
+          <i class="bi bi-trash"></i> Eliminar
+        </button>
+      `;
+
+    const fila = `
+      <tr>
+        <td>${d.area}</td>
+        <td>${d.marca}</td>
+        <td>${d.modelo}</td>
+        <td>${d.numero_serie}</td>
+        <td>${badgeEstado}</td>
+        <td>${d.zona}</td>
+        <td>${d.fecha_modificacion}</td>
+        <td>${acciones}</td>
+      </tr>
+    `;
+    tbody.innerHTML += fila;
+  });
+}
+
+
+
+// Cargar todos al inicio
+function cargarTodos() {
+  fetch('/desfibriladores')
+    .then(res => res.json())
+    .then(data => {
+      mostrarAlerta(`Se cargaron ${data.length} desfibrilador(es).`, "info");
+      cargarTabla(data);
+    })
+    .catch(err => {
+      console.error("Error cargando desfibriladores:", err);
+      mostrarAlerta("Error al cargar los desfibriladores.", "danger");
+    });
+}
+
+// Buscar por criterio
+document.getElementById('form-busqueda').addEventListener('submit', function(e) {
+  e.preventDefault();
+  const query = document.getElementById('query').value;
+
+  fetch(`/buscar?query=${encodeURIComponent(query)}`)
+    .then(res => res.json())
+    .then(data => {
+      mostrarAlerta(`Se encontraron ${data.length} desfibrilador(es).`, "success");
+      cargarTabla(data);
+    })
+    .catch(err => {
+      console.error("Error en la búsqueda:", err);
+      mostrarAlerta("Ocurrió un error al realizar la búsqueda.", "danger");
+    });
+});
+
+// Ejecutar al cargar la página
+document.addEventListener('DOMContentLoaded', cargarTodos);
+</script>
+
+<script>
+function editarDesfibrilador(id) {
+  // Aquí podrías redirigir a la página de edición
+  window.location.href = `/editar-desfibrilador.html?id=${id}`;
+}
+
+function eliminarDesfibrilador(id) {
+  if (!confirm("¿Seguro que deseas eliminar este desfibrilador?")) return;
+
+  fetch(`/desfibriladores/${id}`, { method: 'DELETE' })
+    .then(res => res.json())
+    .then(resp => {
+      alert(resp.mensaje);
+      // Recargar la tabla después de eliminar
+      cargarTodos();
+    })
+    .catch(err => {
+      console.error("Error al eliminar:", err);
+      alert("Error al eliminar desfibrilador");
+    });
+}
+</script>
+
+
+<script>
+// Cargar menú dinámico según tipo de usuario
+fetch('/api/session-user')
+  .then(res => res.json())
+  .then(user => {
+    const menu = document.getElementById('menuOpciones');
+    if (!user) return;
+
+    if (user.tipo_usuario == 1) {
+      // Administrador
+      menu.innerHTML = `
+        <li class="nav-item">
+          <a class="nav-link" href="/gestionar-usuarios.html">
+            <i class="bi bi-people"></i> Gestionar Usuarios
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/agregar-desfibrilador.html">
+            <i class="bi bi-plus-circle"></i> Añadir Desfibrilador
+          </a>
+        </li>
+      `;
+    } else if (user.tipo_usuario == 2) {
+      // Enfermero
+      menu.innerHTML = `
+        <li class="nav-item">
+          <a class="nav-link" href="/mis-datos.html">
+            <i class="bi bi-person-badge"></i> Mis Datos
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/editar-desfibrilador.html">
+            <i class="bi bi-pencil-square"></i> Editar Desfibrilador
+          </a>
+        </li>
+      `;
+    }
+  })
+  .catch(err => console.error("Error cargando menú:", err));
+</script>
+
+
+</body>
+</html>

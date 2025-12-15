@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Agregar Usuario</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="container my-5">
+
+  <h2 class="mb-4">Agregar Nuevo Usuario</h2>
+
+  <form id="formNuevoUsuario">
+    <div class="mb-3">
+      <label for="nombre_usuario" class="form-label">Nombre de Usuario</label>
+      <input type="text" class="form-control" id="nombre_usuario" required>
+    </div>
+    <div class="mb-3">
+      <label for="password" class="form-label">Contraseña</label>
+      <input type="password" class="form-control" id="password" required>
+    </div>
+    <div class="mb-3">
+      <label for="tipo_usuario" class="form-label">Rol</label>
+      <select class="form-select" id="tipo_usuario" required>
+        <option value="1">Administrador</option>
+        <option value="2">Enfermero</option>
+      </select>
+    </div>
+    <button type="submit" class="btn btn-success">Crear Usuario</button>
+    <a href="/gestionar-usuarios.html" class="btn btn-secondary">Cancelar</a>
+  </form>
+
+  <script>
+    document.getElementById('formNuevoUsuario').addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      const nombre_usuario = document.getElementById('nombre_usuario').value;
+      const password = document.getElementById('password').value;
+      const tipo_usuario = document.getElementById('tipo_usuario').value;
+
+      fetch('/api/usuarios', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nombre_usuario, password, tipo_usuario })
+      })
+      .then(res => {
+        if (res.ok) {
+          alert("Usuario creado correctamente");
+          window.location.href = "/gestionar-usuarios.html";
+        } else {
+          alert("Error al crear usuario");
+        }
+      })
+      .catch(err => console.error("Error creando usuario:", err));
+    });
+  </script>
+</body>
+</html>

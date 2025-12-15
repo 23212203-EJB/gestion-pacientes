@@ -1,0 +1,186 @@
+<nav class="navbar" id="navbar">
+    <div class="navbar-content">
+
+        <!-- LOGO ANIMADO -->
+        <div class="logo">
+            <i class="bi bi-hospital"></i>
+            <span class="logo-text">Gestión Hospital+</span>
+        </div>
+
+        <!-- BOTÓN HAMBURGUESA -->
+        <div class="hamburger" id="hamburger">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+
+        <!-- MENÚ -->
+        <ul id="menu" class="menu"></ul>
+
+    </div>
+</nav>
+
+<style>
+/* NAVBAR FLOTANTE GLASSMORPHISM */
+.navbar {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 85%;
+    background: rgba(5, 5, 5, 0.12);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(0, 0, 0, 0.25);
+    border-radius: 20px;
+    padding: 15px 25px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.18);
+    transition: all 0.35s ease;
+    z-index: 9999;
+    animation: slideDown 0.8s ease forwards;
+}
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translate(-50%, -30px); }
+    to   { opacity: 1; transform: translate(-50%, 0); }
+}
+
+/* AUTO-SHRINK */
+.navbar.shrink {
+    width: 75%;
+    padding: 8px 20px;
+    top: 10px;
+    border-radius: 14px;
+}
+
+/* CONTENIDO */
+.navbar-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* LOGO */
+.logo {
+    display: flex;
+    align-items: center;
+    font-size: 1.6rem;
+    color: #ffffff;
+    font-weight: bold;
+    gap: 8px;
+    animation: pulseLogo 3s infinite ease-in-out;
+}
+
+@keyframes pulseLogo {
+    0% { transform: scale(1); opacity: 0.9; }
+    50% { transform: scale(1.12); opacity: 1; }
+    100% { transform: scale(1); opacity: 0.9; }
+}
+
+/* MENU */
+.menu {
+    list-style: none;
+    display: flex;
+    gap: 20px;
+}
+
+.menu li a {
+    text-decoration: none;
+    color: #e7f9ff;
+    font-size: 1.1rem;
+    padding: 6px 10px;
+    border-radius: 8px;
+    transition: 0.3s ease;
+    font-weight: 500;
+}
+
+.menu li a:hover {
+    background: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 0 10px #a5f3fc;
+}
+
+/* --------------------------------------------- */
+/* RESPONSIVE + MENÚ HAMBURGUESA */
+/* --------------------------------------------- */
+
+/* Ocultar hamburguesa en PC */
+.hamburger {
+    display: none;
+}
+
+/* HAMBURGER LINES */
+.hamburger {
+    display: none;
+    flex-direction: column;
+    gap: 5px;
+    cursor: pointer;
+}
+
+.hamburger span {
+    width: 26px;
+    height: 3px;
+    background: white;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+}
+
+/* TOGGLE ANIMATION */
+.hamburger.active span:nth-child(1) {
+    transform: rotate(45deg) translateY(8px);
+}
+.hamburger.active span:nth-child(2) {
+    opacity: 0;
+}
+.hamburger.active span:nth-child(3) {
+    transform: rotate(-45deg) translateY(-8px);
+}
+
+/* VERSION MÓVIL */
+@media (max-width: 850px) {
+
+    .navbar {
+        width: 90%;
+        padding: 12px 18px;
+    }
+
+    .menu {
+        position: absolute;
+        top: 70px;
+        right: 0;
+        width: 100%;
+        flex-direction: column;
+        background: rgba(0,0,0,0.55);
+        backdrop-filter: blur(10px);
+        border-radius: 0 0 20px 20px;
+        padding: 15px 0;
+        gap: 15px;
+        text-align: center;
+
+        /* Oculto por defecto */
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.35s ease;
+    }
+
+    .menu.open {
+        max-height: 300px; /* se abre */
+    }
+
+    /* Mostrar hamburguesa */
+    .hamburger {
+        display: flex;
+    }
+}
+</style>
+
+<script>
+// ABRIR/CERRAR MENÚ EN MÓVIL
+document.addEventListener("DOMContentLoaded", () => {
+    const hamburger = document.getElementById("hamburger");
+    const menu = document.getElementById("menu");
+
+    hamburger.addEventListener("click", () => {
+        hamburger.classList.toggle("active");
+        menu.classList.toggle("open");
+    });
+});
+</script>

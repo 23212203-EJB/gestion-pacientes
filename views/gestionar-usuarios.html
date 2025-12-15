@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Gestionar Usuarios</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="container my-5">
+
+  <h2 class="mb-4">Gestionar Usuarios</h2>
+<a href="/index.html" class="btn btn-outline-primary mb-4">← Volver al Inicio</a>
+
+
+<!-- Tabla de usuarios -->
+<table class="table table-striped" id="tabla-usuarios">
+  <thead class="table-dark">
+    <tr>
+      <th>ID</th>
+      <th>Nombre de Usuario</th>
+      <th>Rol</th>
+      <th>Acciones</th>
+    </tr>
+  </thead>
+  <tbody>
+    <!-- Filas dinámicas -->
+  </tbody>
+</table>
+
+  <!-- Botón para agregar nuevo usuario -->
+  <a href="/usuarios-nuevo.html" class="btn btn-success">Agregar Usuario</a>
+
+ <!-- Modal para editar usuario -->
+<div class="modal fade" id="modalEditar" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="formEditar">
+        <div class="modal-header">
+          <h5 class="modal-title">Editar Usuario</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="editar-id">
+          <div class="mb-3">
+            <label for="editar-nombre_usuario" class="form-label">Nombre de Usuario</label>
+            <input type="text" class="form-control" id="editar-nombre_usuario" required>
+          </div>
+          <div class="mb-3">
+            <label for="editar-password" class="form-label">Nueva Contraseña</label>
+            <input type="password" class="form-control" id="editar-password" placeholder="Dejar en blanco para no cambiar">
+          </div>
+          <div class="mb-3">
+            <label for="editar-rol" class="form-label">Rol</label>
+            <select class="form-select" id="editar-rol" required>
+              <option value="1">Administrador</option>
+              <option value="2">Enfermero</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Guardar cambios</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Cargar usuarios desde el backend
+    function cargarUsuarios() {
+  fetch('/api/usuarios')
+    .then(response => response.json())
+    .then(usuarios => {
+      const tbody = document.querySelector('#tabla-usuarios tbody');
+      tbody.innerHTML = '';
+
+      if (usuarios.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center">No hay usuarios registrados</td></tr>';
+        return;
+      }
+
+      usuarios.forEach(usuario => {
+        const rol = usuario.tipo_usuario == 1 ? "Administrador" :
+                    usuario.tipo_usuario == 2 ? "Enfermero" : "Otro";
+
+        const fila = `
+          <tr>
+            <td>${usuario.id}</td>
+            <td>${usuario.nombre_usuario}</td>
+            <td>${rol}</td>
+            <td>
+              <button class="btn btn-warning btn-sm" onclick="abrirEditar(${usuario.id})">Editar</button>
+              <button class="btn btn-danger btn-sm" onclick="eliminarUsuario(${usuario.id})">Eliminar</button>
+            </td>
+          </tr>
+        `;
+        tbody.innerHTML += fila;
+      });
+    })
+    .catch(err => console.error("Error cargando usuarios:", err));
+}
+
+// Abrir modal de edición
+function abrirEditar(id) {
+  fetch(`/api/usuarios/${id}`)
+    .then(res => res.json())
+    .then(usuario => {
+      document.getElementById('editar-id').value = usuario.id;
+      document.getElementById('editar-nombre_usuario').value = usuario.nombre_usuario;
+      document.getElementById('editar-rol').value = usuario.tipo_usuario;
+
+      // El campo contraseña se deja vacío (solo se cambia si el admin escribe algo)
+      document.getElementById('editar-password').value = "";
+
+      const modal = new bootstrap.Modal(document.getElementById('modalEditar'));
+      modal.show();
+    })
+    .catch(err => console.error("Error cargando usuario:", err));
+}
+
+// Guardar cambios en usuario
+document.getElementById('formEditar').addEventListener('submit', function(e) {
+  e.preventDefault();
+  const id = document.getElementById('editar-id').value;
+  const nombre_usuario = document.getElementById('editar-nombre_usuario').value;
+  const tipo_usuario = document.getElementById('editar-rol').value;
+  const password = document.getElementById('editar-password').value;
+
+  // Enviar contraseña solo si el admin escribió algo
+  const body = password 
+    ? { nombre_usuario, tipo_usuario, password } 
+    : { nombre_usuario, tipo_usuario };
+
+  fetch(`/api/usuarios/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  })
+  .then(res => {
+    if (res.ok) {
+      alert("Usuario actualizado correctamente");
+      cargarUsuarios();
+      bootstrap.Modal.getInstance(document.getElementById('modalEditar')).hide();
+    } else {
+      alert("Error al actualizar usuario");
+    }
+  })
+  .catch(err => console.error("Error actualizando usuario:", err));
+});
+
+// Eliminar usuario
+    function eliminarUsuario(id) {
+      if (!confirm("¿Seguro que deseas eliminar este usuario?")) return;
+
+      fetch(`/api/usuarios/${id}`, { method: 'DELETE' })
+        .then(res => {
+          if (res.ok) {
+            alert("Usuario eliminado correctamente");
+            cargarUsuarios();
+          } else {
+            alert("Error al eliminar usuario");
+          }
+        })
+        .catch(err => console.error("Error eliminando usuario:", err));
+    }
+
+    // Inicializar tabla al cargar la página
+    cargarUsuarios();
+  </script>
+</body>
+</html>

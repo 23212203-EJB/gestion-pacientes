@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Editar Mis Datos - Enfermero</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="container my-5">
+
+  <h2 class="mb-4">Editar Mis Datos</h2>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="/index.html">
+      <i class="bi bi-hospital"></i> Hospital
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" 
+            data-bs-target="#navbarNav" aria-controls="navbarNav" 
+            aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav me-auto" id="menuOpciones"></ul>
+      <ul class="navbar-nav">
+        <li class="nav-item">
+          <a class="nav-link text-danger" href="/logout">
+            <i class="bi bi-box-arrow-right"></i> Cerrar Sesión
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<script>
+  fetch('/api/session-user')
+    .then(res => res.json())
+    .then(user => {
+      const menu = document.getElementById('menuOpciones');
+      if (!user) return;
+
+      if (user.tipo_usuario == 1) {
+        // Administrador
+        menu.innerHTML = `
+          <li class="nav-item">
+            <a class="nav-link" href="/gestionar-usuarios.html">
+              <i class="bi bi-people"></i> Gestionar Usuarios
+            </a>
+          </li>
+        `;
+      } else if (user.tipo_usuario == 2) {
+        // Enfermero
+        menu.innerHTML = `
+          <li class="nav-item">
+            <a class="nav-link" href="/mis-datos.html">
+              <i class="bi bi-person-badge"></i> Mis Datos
+            </a>
+          </li>
+        `;
+      }
+    })
+    .catch(err => console.error("Error cargando menú:", err));
+</script>
+
+  <form id="formEnfermero">
+    <div class="mb-3">
+      <label for="nombre_enfermero" class="form-label">Nombre</label>
+      <input type="text" class="form-control" id="nombre_enfermero" required>
+    </div>
+    <div class="mb-3">
+      <label for="apellido" class="form-label">Apellido</label>
+      <input type="text" class="form-control" id="apellido" required>
+    </div>
+    <div class="mb-3">
+      <label for="ubicacion" class="form-label">Ubicación</label>
+      <input type="text" class="form-control" id="ubicacion" required>
+    </div>
+    <button type="submit" class="btn btn-primary">Guardar cambios</button>
+    <a href="/mis-datos.html" class="btn btn-secondary">Cancelar</a>
+  </form>
+
+  <script>
+    // Cargar datos actuales
+    fetch('/api/mis-datos')
+      .then(res => res.json())
+      .then(data => {
+        if (data) {
+          document.getElementById('nombre_enfermero').value = data.nombre_enfermero || "";
+          document.getElementById('apellido').value = data.apellido || "";
+          document.getElementById('ubicacion').value = data.ubicacion || "";
+        }
+      });
+
+    // Guardar cambios
+    document.getElementById('formEnfermero').addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      const nombre_enfermero = document.getElementById('nombre_enfermero').value;
+      const apellido = document.getElementById('apellido').value;
+      const ubicacion = document.getElementById('ubicacion').value;
+
+      fetch('/api/mis-datos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nombre_enfermero, apellido, ubicacion })
+      })
+      .then(res => {
+        if (res.ok) {
+          alert("Datos actualizados correctamente");
+          window.location.href = "/mis-datos.html"; // Regresa a la vista de consulta
+        } else {
+          alert("Error al actualizar datos");
+        }
+      });
+    });
+  </script>
+</body>
+</html>
